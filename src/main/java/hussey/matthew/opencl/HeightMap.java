@@ -8,5 +8,5 @@ package hussey.matthew.opencl;
  *
  */
 public interface HeightMap {
-	VisibleCells findCellsVisibleFrom(Origin origin);
+	void findCellsVisibleFrom(Origin origin, VisibleCells visibleCells);
 }

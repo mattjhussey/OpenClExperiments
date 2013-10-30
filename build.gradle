@@ -9,7 +9,6 @@ repositories {
 
 dependencies {
 	compile 'org.jocl:jocl:0.1.9'
-	compile 'picocontainer:picocontainer:3'
 	testCompile 'junit:junit:4.11'
 	testCompile 'org.jmock:jmock-junit4:2.6.0'
 }
