@@ -10,5 +10,6 @@ import java.awt.Graphics;
  *
  */
 public interface VisibleCells {
+	void addCell(Cell cell);
 	void displaySelf(Graphics graphics);
 }

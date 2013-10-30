@@ -7,7 +7,7 @@ package hussey.matthew.opencl;
  * @author matt
  *
  */
-public interface Origin {
-	int x();
-	int y();
+public interface Grid {
+	int height();
+	int width();
 }
