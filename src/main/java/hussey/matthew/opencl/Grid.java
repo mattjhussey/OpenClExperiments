@@ -8,6 +8,7 @@ package hussey.matthew.opencl;
  *
  */
 public interface Grid {
+	int at(int x, int y);
 	int height();
 	int width();
 }

@@ -10,4 +10,5 @@ package hussey.matthew.opencl;
 public interface Origin {
 	int x();
 	int y();
+	int z();
 }
