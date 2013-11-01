@@ -1,7 +1,7 @@
 /**
  * 
  */
-package hussey.matthew.opencl.singlethread.gui;
+package hussey.matthew.opencl.gui;
 
 import hussey.matthew.opencl.Cell;
 import hussey.matthew.opencl.Grid;
@@ -12,8 +12,11 @@ import hussey.matthew.opencl.VisibleCells;
 import hussey.matthew.opencl.multithreaded.MultipleThreadHeightMap;
 import hussey.matthew.opencl.singlethread.SingleThreadHeightMap;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -21,8 +24,10 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 /**
  * @author matt
@@ -119,8 +124,7 @@ public class Main {
 				return true;
 			}
 		};
-		//final HeightMap heightMap = new SingleThreadHeightMap(lineOfSight);
-		final HeightMap heightMap = new MultipleThreadHeightMap(lineOfSight);
+		
 		final Origin origin = new Origin() {
 
 			@Override
@@ -160,9 +164,11 @@ public class Main {
 			final Set<Cell> cells = new HashSet<>();
 			final ReentrantLock lock = new ReentrantLock(true);
 		};
-		heightMap.findCellsVisibleFrom(origin, visibleCells, 90);
 		
-		JFrame frame = new JFrame() {
+		final JFrame frame = new JFrame();
+		
+		final JPanel drawPanel = new JPanel()
+		{
 			/**
 			 * 
 			 */
@@ -173,6 +179,23 @@ public class Main {
 				visibleCells.displaySelf(g);
 			}
 		};
+		final JComboBox<HeightMap> chooseProcess = new JComboBox<>();
+		chooseProcess.addItem(new SingleThreadHeightMap(lineOfSight));
+		chooseProcess.addItem(new MultipleThreadHeightMap(lineOfSight));
+		chooseProcess.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				final Object source = e.getSource();
+				@SuppressWarnings("unchecked")
+				final JComboBox<HeightMap> me = (JComboBox<HeightMap>)source;
+				final HeightMap process = (HeightMap)me.getSelectedItem();
+				process.findCellsVisibleFrom(origin, visibleCells, 90);
+				drawPanel.repaint();
+			}
+		});
+		frame.add(chooseProcess, BorderLayout.NORTH);
+		frame.add(drawPanel);
 		
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JDialog.EXIT_ON_CLOSE);
