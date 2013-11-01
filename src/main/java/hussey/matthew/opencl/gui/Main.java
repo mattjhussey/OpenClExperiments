@@ -11,6 +11,7 @@ import hussey.matthew.opencl.LineOfSight;
 import hussey.matthew.opencl.ListGrid;
 import hussey.matthew.opencl.Origin;
 import hussey.matthew.opencl.VisibleCells;
+import hussey.matthew.opencl.multithreaded.ByRowMultipleThreadHeightMap;
 import hussey.matthew.opencl.multithreaded.MultipleThreadHeightMap;
 import hussey.matthew.opencl.singlethread.SingleThreadHeightMap;
 
@@ -116,6 +117,7 @@ public class Main {
 		final JComboBox<HeightMap> chooseProcess = new JComboBox<>();
 		chooseProcess.addItem(new SingleThreadHeightMap(lineOfSight, width, height));
 		chooseProcess.addItem(new MultipleThreadHeightMap(lineOfSight, width, height));
+		chooseProcess.addItem(new ByRowMultipleThreadHeightMap(lineOfSight, width, height));
 		chooseProcess.addActionListener(new ActionListener() {
 			
 			@Override

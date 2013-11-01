@@ -3,12 +3,6 @@
  */
 package hussey.matthew.opencl;
 
-import static org.junit.Assert.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -22,9 +16,7 @@ import org.junit.Test;
  */
 public class BresnhamsLineOfSightTest {
 	public JUnitRuleMockery context = new JUnitRuleMockery();
-	private final Grid grid = context.mock(Grid.class);
-	private final LineOfSight testItem = new BresnhamsLineOfSight(grid);
-
+	
 	/**
 	 * @throws java.lang.Exception
 	 */
