@@ -19,8 +19,10 @@ import java.util.concurrent.TimeUnit;
  */
 public final class MultipleThreadHeightMap implements HeightMap {
 	
-	public MultipleThreadHeightMap(final LineOfSight lineOfSight) {
+	public MultipleThreadHeightMap(final LineOfSight lineOfSight, final int width, final int height) {
 		this.lineOfSight = lineOfSight;
+		this.width = width;
+		this.height = height;
 	}
 
 	@Override
@@ -32,8 +34,8 @@ public final class MultipleThreadHeightMap implements HeightMap {
 		
 		final ExecutorService executor = Executors.newCachedThreadPool();
 		
-		for(int row = 0; row != 500; ++row) {
-			for(int column = 0; column != 500; ++column) {
+		for(int row = 0; row != this.height; ++row) {
+			for(int column = 0; column != this.width; ++column) {
 				// Work each line from origin to cell
 				// If cell can be seen from origin, add to VisibleCells
 				
@@ -81,4 +83,6 @@ public final class MultipleThreadHeightMap implements HeightMap {
 	}
 	
 	private final LineOfSight lineOfSight;
+	private final int width;
+	private final int height;
 }

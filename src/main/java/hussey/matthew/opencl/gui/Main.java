@@ -3,10 +3,12 @@
  */
 package hussey.matthew.opencl.gui;
 
+import hussey.matthew.opencl.BresnhamsLineOfSight;
 import hussey.matthew.opencl.Cell;
 import hussey.matthew.opencl.Grid;
 import hussey.matthew.opencl.HeightMap;
 import hussey.matthew.opencl.LineOfSight;
+import hussey.matthew.opencl.ListGrid;
 import hussey.matthew.opencl.Origin;
 import hussey.matthew.opencl.VisibleCells;
 import hussey.matthew.opencl.multithreaded.MultipleThreadHeightMap;
@@ -40,8 +42,8 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		
-		final int width = 500;
-		final int height = 500;
+		final int width = 1000;
+		final int height = 1000;
 		final List<Integer> heightList = new ArrayList<>();
 		final int limit = width * height;
 		final int maxHeight = 100;
@@ -51,79 +53,9 @@ public class Main {
 			heightList.add(rand.nextInt(maxHeight));
 		}
 		
-		final Grid heights = new Grid() {
-			
-			@Override
-			public int width() {
-				return width;
-			}
-			
-			@Override
-			public int height() {
-				return height;
-			}
-
-			@Override
-			public int at(int x, int y) {
-				int index = x * width + y;
-				return heightList.get(index);
-			}
-		};
-		final LineOfSight lineOfSight = new LineOfSight() {
-			
-			@Override			
-			public boolean canSee(int x0, int y0, int z0, int x1, int y1, int z1)
-			{
-				int xtotaloffset = Math.abs(x1 - x0);
-				int ytotaloffset = Math.abs(y1 - y0);
-				double totalDistance = Math.sqrt(xtotaloffset * xtotaloffset + ytotaloffset * ytotaloffset);
-				double rise = z1 - z0;
-				double gradient = rise / totalDistance;
-				
-				boolean steep = Math.abs(y1 - y0) > Math.abs(x1 - x0);
-				if(steep) {
-					int temp = x0;
-					x0 = y0;
-					y0 = temp;
-					temp = x1;
-					x1 = y1;
-					y1 = temp;
-				}
-				
-				int deltax = Math.abs(x1 - x0);
-				int deltay = Math.abs(y1 - y0);
-				int error = deltax / 2;
-				int y = y0;
-				
-				int inc = x0 < x1 ? 1 : -1;
-				int ystep = y0 < y1 ? 1 : -1;
-				
-				for(int x = x0; x != x1; x += inc) {
-					
-					int checkx = steep ? y : x;
-					int checky = steep ? x : y;
-					
-					int z = heights.at(checkx, checky);
-					int xoffset = Math.abs(x0 - checkx);
-					int yoffset = Math.abs(y0 - checky);
-					double distance = Math.sqrt(xoffset * xoffset + yoffset * yoffset);
-					double toClear = distance * gradient + z0;
-					if(toClear < z)
-					{
-						return false;
-					}
-					
-					error -= deltay;
-					
-					if(error < 0) {
-						y += ystep;
-						error += deltax;
-					}
-				}
-				
-				return true;
-			}
-		};
+		final Grid heights = new ListGrid(heightList, width);
+		
+		final LineOfSight lineOfSight = new BresnhamsLineOfSight(heights);
 		
 		final Origin origin = new Origin() {
 
@@ -139,8 +71,10 @@ public class Main {
 
 			@Override
 			public int z() {
-				return heights.at(x(), y()) + 50;
-			} };
+				return heights.at(x(), y()) + 150;
+			}
+		};
+		
 		final VisibleCells visibleCells = new VisibleCells() {
 			
 			@Override
@@ -180,8 +114,8 @@ public class Main {
 			}
 		};
 		final JComboBox<HeightMap> chooseProcess = new JComboBox<>();
-		chooseProcess.addItem(new SingleThreadHeightMap(lineOfSight));
-		chooseProcess.addItem(new MultipleThreadHeightMap(lineOfSight));
+		chooseProcess.addItem(new SingleThreadHeightMap(lineOfSight, width, height));
+		chooseProcess.addItem(new MultipleThreadHeightMap(lineOfSight, width, height));
 		chooseProcess.addActionListener(new ActionListener() {
 			
 			@Override
