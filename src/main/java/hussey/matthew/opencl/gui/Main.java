@@ -31,6 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /**
@@ -44,8 +45,8 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		
-		final int width = 500;
-		final int height = 400;
+		final int width = 2000;
+		final int height = 1600;
 		final List<Integer> heightList = new ArrayList<>();
 		final int limit = width * height;
 		final int maxHeight = 100;
@@ -63,12 +64,12 @@ public class Main {
 
 			@Override
 			public int x() {
-				return width / 2 - 50;
+				return (width * 3)/ 4;
 			}
 
 			@Override
 			public int y() {
-				return height / 2 - 100;
+				return (height * 2) / 3;
 			}
 
 			@Override
@@ -125,6 +126,9 @@ public class Main {
 				visibleCells.displaySelf(g);
 			}
 		};
+		final JPanel upperPanel = new JPanel(new BorderLayout());
+		final JLabel notes = new JLabel("SPACE");
+		upperPanel.add(notes, BorderLayout.NORTH);
 		final JComboBox<HeightMap> chooseProcess = new JComboBox<>();
 		chooseProcess.addItem(new SingleThreadHeightMap(lineOfSight, width, height));
 		chooseProcess.addItem(new MultipleThreadHeightMap(lineOfSight, width, height));
@@ -139,11 +143,16 @@ public class Main {
 				final JComboBox<HeightMap> me = (JComboBox<HeightMap>)source;
 				final HeightMap process = (HeightMap)me.getSelectedItem();
 				visibleCells.clear();
+				long before = System.currentTimeMillis();
 				process.findCellsVisibleFrom(origin, visibleCells, 90);
+				long after = System.currentTimeMillis();
+				long delta = after - before;
+				notes.setText(String.format("%d ms", delta));
 				drawPanel.repaint();
 			}
 		});
-		frame.add(chooseProcess, BorderLayout.NORTH);
+		upperPanel.add(chooseProcess);
+		frame.add(upperPanel, BorderLayout.NORTH);
 		frame.add(drawPanel);
 		
 		frame.setVisible(true);

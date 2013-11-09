@@ -31,23 +31,7 @@ public class OpenCl implements HeightMap {
 	
 	public OpenCl(final Grid heights) {
 		this.heights = heights;
-	}
-
-    //
-    // The source code of the OpenCL program to execute
-    //
-    /*private static String programSource =
-        "__kernel void "+
-        "sampleKernel(__global char *heights, " +
-        "             __global int *originX, " +
-        "             __global int *originY, " +
-        "             __global int *originZ, " +
-        "		      __global char *c)"+
-        "{"+
-        "    int gid = get_global_id(0);"+
-        "    c[gid] = 1;"+
-        "}";*/
-    
+	}    
 
     private static String programSource =
         "__kernel void "+
@@ -57,7 +41,7 @@ public class OpenCl implements HeightMap {
         "             __global int *originZArr, " +
         "             __global int *targetHeight, " +
         "             __global int *arrayWidth, " +
-        "		      __global int *c)"+
+        "		      __global short *c)"+
         "{"+
         "    int gid = get_global_id(0);" +
         "    int x0 = originXArr[0];" +
@@ -127,7 +111,7 @@ public class OpenCl implements HeightMap {
         int originZArray[] = {origin.z()};
         int targetHeightArray[] = {height};
         int arrayWidth[] = {heights.width()};
-        int dstArray[] = new int[n];
+        short dstArray[] = new short[n];
         for(int row = 0; row != heights.height(); ++row) {
         	int rowOffset = row * heights.width();
         	for(int column = 0; column != heights.width(); ++column) {
@@ -148,7 +132,7 @@ public class OpenCl implements HeightMap {
         // The platform, device type and device number
         // that will be used
         final int platformIndex = 0;
-        final long deviceType = CL_DEVICE_TYPE_ALL;
+        final long deviceType = CL_DEVICE_TYPE_GPU;
         final int deviceIndex = 0;
 
         // Enable exceptions and subsequently omit error checks in this sample
@@ -177,7 +161,7 @@ public class OpenCl implements HeightMap {
         cl_device_id devices[] = new cl_device_id[numDevices];
         clGetDeviceIDs(platform, deviceType, numDevices, devices, null);
         cl_device_id device = devices[deviceIndex];
-
+        
         // Create a context for the selected device
         cl_context context = clCreateContext(
             contextProperties, 1, new cl_device_id[]{device}, 
@@ -208,8 +192,8 @@ public class OpenCl implements HeightMap {
         		CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
                 Sizeof.cl_int * 1, arrayWidthPtr, null);
         memObjects[6] = clCreateBuffer(context, 
-            CL_MEM_READ_WRITE, 
-            Sizeof.cl_int * n, null, null);
+            CL_MEM_WRITE_ONLY, 
+            Sizeof.cl_short * n, null, null);
         
         // Create the program from the source code
         cl_program program = clCreateProgramWithSource(context,
@@ -230,7 +214,7 @@ public class OpenCl implements HeightMap {
         
         // Set the work-item dimensions
         long global_work_size[] = new long[]{n};
-        long local_work_size[] = new long[]{1};
+        long local_work_size[] = new long[]{250};
         
         // Execute the kernel
         clEnqueueNDRangeKernel(commandQueue, kernel, 1, null,
@@ -238,7 +222,7 @@ public class OpenCl implements HeightMap {
         
         // Read the output data
         clEnqueueReadBuffer(commandQueue, memObjects[6], CL_TRUE, 0,
-            n * Sizeof.cl_int, dst, 0, null, null);
+            n * Sizeof.cl_short, dst, 0, null, null);
         
         // Release kernel, program, and memory objects
         for(cl_mem memObject: memObjects) {
@@ -256,7 +240,7 @@ public class OpenCl implements HeightMap {
         	for(int column = 0; column != heights.width(); ++column) {
         		final int fcolumn = column;
         		int cellIndex = rowOffset + column;
-        		int result = dstArray[cellIndex];
+        		short result = dstArray[cellIndex];
         		boolean resultIsZero = result == 0;
         		boolean resultIsTrue = !resultIsZero;
         		if(resultIsTrue) {
