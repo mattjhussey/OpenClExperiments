@@ -28,7 +28,7 @@ public class ListGrid implements Grid {
 
 	@Override
 	public int at(int x, int y) {
-		int index = x * width + y;
+		int index = y * width + x;
 		return values.get(index);
 	}
 	

@@ -18,9 +18,9 @@ public class BresnhamsLineOfSight implements LineOfSight {
 	{
 		int xtotaloffset = Math.abs(x1 - x0);
 		int ytotaloffset = Math.abs(y1 - y0);
-		double totalDistance = Math.sqrt(xtotaloffset * xtotaloffset + ytotaloffset * ytotaloffset);
-		double rise = z1 - z0;
-		double gradient = rise / totalDistance;
+		float totalDistance = (float)Math.sqrt(xtotaloffset * xtotaloffset + ytotaloffset * ytotaloffset);
+		float rise = z1 - z0;
+		float gradient = rise / totalDistance;
 		
 		int originx = x0;
 		int originy = y0;
@@ -51,8 +51,8 @@ public class BresnhamsLineOfSight implements LineOfSight {
 			int z = heights.at(checkx, checky);
 			int xoffset = Math.abs(originx - checkx);
 			int yoffset = Math.abs(originy - checky);
-			double distance = Math.sqrt(xoffset * xoffset + yoffset * yoffset);
-			double toClear = distance * gradient + z0;
+			float distance = (float)Math.sqrt(xoffset * xoffset + yoffset * yoffset);
+			float toClear = distance * gradient + z0;
 			if(toClear < z)
 			{
 				return false;

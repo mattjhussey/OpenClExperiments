@@ -13,6 +13,7 @@ import hussey.matthew.opencl.Origin;
 import hussey.matthew.opencl.VisibleCells;
 import hussey.matthew.opencl.multithreaded.ByRowMultipleThreadHeightMap;
 import hussey.matthew.opencl.multithreaded.MultipleThreadHeightMap;
+import hussey.matthew.opencl.opencl.OpenCl;
 import hussey.matthew.opencl.singlethread.SingleThreadHeightMap;
 
 import java.awt.BorderLayout;
@@ -43,8 +44,8 @@ public class Main {
 	 */
 	public static void main(String[] args) {
 		
-		final int width = 1000;
-		final int height = 1000;
+		final int width = 500;
+		final int height = 400;
 		final List<Integer> heightList = new ArrayList<>();
 		final int limit = width * height;
 		final int maxHeight = 100;
@@ -62,12 +63,12 @@ public class Main {
 
 			@Override
 			public int x() {
-				return 250;
+				return width / 2 - 50;
 			}
 
 			@Override
 			public int y() {
-				return 250;
+				return height / 2 - 100;
 			}
 
 			@Override
@@ -96,6 +97,16 @@ public class Main {
 				}
 			}
 			
+			@Override
+			public void clear() {
+				lock.lock();
+				try {
+					cells.clear();
+				} finally {
+					lock.unlock();
+				}
+			}
+			
 			final Set<Cell> cells = new HashSet<>();
 			final ReentrantLock lock = new ReentrantLock(true);
 		};
@@ -118,6 +129,7 @@ public class Main {
 		chooseProcess.addItem(new SingleThreadHeightMap(lineOfSight, width, height));
 		chooseProcess.addItem(new MultipleThreadHeightMap(lineOfSight, width, height));
 		chooseProcess.addItem(new ByRowMultipleThreadHeightMap(lineOfSight, width, height));
+		chooseProcess.addItem(new OpenCl(heights));
 		chooseProcess.addActionListener(new ActionListener() {
 			
 			@Override
@@ -126,6 +138,7 @@ public class Main {
 				@SuppressWarnings("unchecked")
 				final JComboBox<HeightMap> me = (JComboBox<HeightMap>)source;
 				final HeightMap process = (HeightMap)me.getSelectedItem();
+				visibleCells.clear();
 				process.findCellsVisibleFrom(origin, visibleCells, 90);
 				drawPanel.repaint();
 			}

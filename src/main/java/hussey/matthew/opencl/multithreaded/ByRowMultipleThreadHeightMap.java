@@ -32,7 +32,7 @@ public final class ByRowMultipleThreadHeightMap implements HeightMap {
 		final int y0 = origin.y();
 		final int z0 = origin.z();
 		
-		final ExecutorService executor = Executors.newCachedThreadPool();
+		final ExecutorService executor = Executors.newFixedThreadPool(4);
 
 		final int z1 = height;
 		for(int row = 0; row != this.height; ++row) {
