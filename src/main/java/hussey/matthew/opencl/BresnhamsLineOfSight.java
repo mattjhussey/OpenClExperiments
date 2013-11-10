@@ -9,8 +9,9 @@ package hussey.matthew.opencl;
  */
 public class BresnhamsLineOfSight implements LineOfSight {
 	
-	public BresnhamsLineOfSight(final Grid heights) {
-		this.heights = heights;
+	public BresnhamsLineOfSight(final int[] heights, final int arrayWidth) {
+		this.heightArray = heights;
+		this.arrayWidth = arrayWidth;
 	}
 	
 	@Override			
@@ -48,7 +49,8 @@ public class BresnhamsLineOfSight implements LineOfSight {
 			int checkx = steep ? y : x;
 			int checky = steep ? x : y;
 			
-			int z = heights.at(checkx, checky);
+			int heightOffset = checky * arrayWidth + checkx;
+			int z = heightArray[heightOffset];
 			int xoffset = Math.abs(originx - checkx);
 			int yoffset = Math.abs(originy - checky);
 			float distance = (float)Math.sqrt(xoffset * xoffset + yoffset * yoffset);
@@ -69,6 +71,7 @@ public class BresnhamsLineOfSight implements LineOfSight {
 		return true;
 	}
 	
-	final Grid heights;
+	final int[] heightArray;
+	final int arrayWidth;
 
 }

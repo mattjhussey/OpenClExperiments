@@ -3,10 +3,8 @@
  */
 package hussey.matthew.opencl.multithreaded;
 
-import hussey.matthew.opencl.Cell;
 import hussey.matthew.opencl.HeightMap;
 import hussey.matthew.opencl.LineOfSight;
-import hussey.matthew.opencl.Origin;
 import hussey.matthew.opencl.VisibleCells;
 
 import java.util.concurrent.ExecutorService;
@@ -26,11 +24,11 @@ public final class MultipleThreadHeightMap implements HeightMap {
 	}
 
 	@Override
-	public void findCellsVisibleFrom(Origin origin, final VisibleCells visibleCells, int height) {
+	public void findCellsVisibleFrom(int originX, int originY, int originZ, final VisibleCells visibleCells, int height) {
 
-		final int x0 = origin.x();
-		final int y0 = origin.y();
-		final int z0 = origin.z();
+		final int x0 = originX;
+		final int y0 = originY;
+		final int z0 = originZ;
 		
 		final ExecutorService executor = Executors.newFixedThreadPool(4);
 		
@@ -52,19 +50,8 @@ public final class MultipleThreadHeightMap implements HeightMap {
 						
 						if(canSee)
 						{
-							final int x = x1;
-							final int y = y1;
 							// Check here
-							visibleCells.addCell(new Cell() {							
-								@Override
-								public int y() {
-									return y;
-								}							
-								@Override
-								public int x() {
-									return x;
-								}
-							});					
+							visibleCells.addCell(x1, y1);					
 						}
 					}
 				};

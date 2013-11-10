@@ -3,7 +3,30 @@
  */
 package hussey.matthew.opencl.opencl;
 
-import static org.jocl.CL.*;
+import static org.jocl.CL.CL_CONTEXT_PLATFORM;
+import static org.jocl.CL.CL_DEVICE_TYPE_GPU;
+import static org.jocl.CL.CL_MEM_COPY_HOST_PTR;
+import static org.jocl.CL.CL_MEM_READ_ONLY;
+import static org.jocl.CL.CL_MEM_WRITE_ONLY;
+import static org.jocl.CL.CL_TRUE;
+import static org.jocl.CL.clBuildProgram;
+import static org.jocl.CL.clCreateBuffer;
+import static org.jocl.CL.clCreateCommandQueue;
+import static org.jocl.CL.clCreateContext;
+import static org.jocl.CL.clCreateKernel;
+import static org.jocl.CL.clCreateProgramWithSource;
+import static org.jocl.CL.clEnqueueNDRangeKernel;
+import static org.jocl.CL.clEnqueueReadBuffer;
+import static org.jocl.CL.clGetDeviceIDs;
+import static org.jocl.CL.clGetPlatformIDs;
+import static org.jocl.CL.clReleaseCommandQueue;
+import static org.jocl.CL.clReleaseContext;
+import static org.jocl.CL.clReleaseKernel;
+import static org.jocl.CL.clReleaseMemObject;
+import static org.jocl.CL.clReleaseProgram;
+import static org.jocl.CL.clSetKernelArg;
+import hussey.matthew.opencl.HeightMap;
+import hussey.matthew.opencl.VisibleCells;
 
 import org.jocl.CL;
 import org.jocl.Pointer;
@@ -17,20 +40,16 @@ import org.jocl.cl_mem;
 import org.jocl.cl_platform_id;
 import org.jocl.cl_program;
 
-import hussey.matthew.opencl.Cell;
-import hussey.matthew.opencl.Grid;
-import hussey.matthew.opencl.HeightMap;
-import hussey.matthew.opencl.Origin;
-import hussey.matthew.opencl.VisibleCells;
-
 /**
  * @author matt
  *
  */
 public class OpenCl implements HeightMap {
 	
-	public OpenCl(final Grid heights) {
-		this.heights = heights;
+	public OpenCl(final int[] heightArray, final int arrayWidth) {
+		this.heightArray = heightArray;
+		this.arrayWidth = arrayWidth;
+		this.arrayHeight = this.heightArray.length / this.arrayWidth;
 	}    
 
     private static String programSource =
@@ -101,85 +120,24 @@ public class OpenCl implements HeightMap {
         "    c[gid] = 1;" +
         "}";
     
-    /*
-		int xtotaloffset = Math.abs(x1 - x0);
-		int ytotaloffset = Math.abs(y1 - y0);
-		float totalDistance = (float)Math.sqrt(xtotaloffset * xtotaloffset + ytotaloffset * ytotaloffset);
-		float rise = z1 - z0;
-		float gradient = rise / totalDistance;
-		
-		int originx = x0;
-		int originy = y0;
-		
-		boolean steep = Math.abs(y1 - y0) > Math.abs(x1 - x0);
-		if(steep) {
-			int temp = x0;
-			x0 = y0;
-			y0 = temp;
-			temp = x1;
-			x1 = y1;
-			y1 = temp;
-		}
-		
-		int deltax = Math.abs(x1 - x0);
-		int deltay = Math.abs(y1 - y0);
-		int error = deltax / 2;
-		int y = y0;
-		
-		int inc = x0 < x1 ? 1 : -1;
-		int ystep = y0 < y1 ? 1 : -1;
-		
-		for(int x = x0; x != x1; x += inc) {
-			
-			int checkx = steep ? y : x;
-			int checky = steep ? x : y;
-			
-			int z = heights.at(checkx, checky);
-			int xoffset = Math.abs(originx - checkx);
-			int yoffset = Math.abs(originy - checky);
-			float distance = (float)Math.sqrt(xoffset * xoffset + yoffset * yoffset);
-			float toClear = distance * gradient + z0;
-			if(toClear < z)
-			{
-				return false;
-			}
-			
-			error -= deltay;
-			
-			if(error < 0) {
-				y += ystep;
-				error += deltax;
-			}
-		}
-		
-		return true;*/
-    
 	@Override
-	public void findCellsVisibleFrom(Origin origin, VisibleCells visibleCells, int height) {
+	public void findCellsVisibleFrom(int originX, int originY, int originZ, VisibleCells visibleCells, int height) {
         // Create input- and output data 
-        int n = heights.height() * heights.width();
-        int heightArray[] = new int[n];
-        int originXArray[] = {origin.x()};
-        int originYArray[] = {origin.y()};
-        int originZArray[] = {origin.z()};
+        int n = heightArray.length;
+        int heightArray[] = this.heightArray;
+        int originXArray[] = {originX};
+        int originYArray[] = {originY};
+        int originZArray[] = {originZ};
         int targetHeightArray[] = {height};
-        int arrayWidth[] = {heights.width()};
+        int heightArrayWidth[] = {arrayWidth};
         short dstArray[] = new short[n];
-        for(int row = 0; row != heights.height(); ++row) {
-        	int rowOffset = row * heights.width();
-        	for(int column = 0; column != heights.width(); ++column) {
-        		int offset = rowOffset + column;
-        		int cellHeight = heights.at(column, row);
-        		heightArray[offset] = cellHeight;
-        	}
-        }
         
         Pointer heightPtr = Pointer.to(heightArray);
         Pointer originXPtr = Pointer.to(originXArray);
         Pointer originYPtr = Pointer.to(originYArray);
         Pointer originZPtr = Pointer.to(originZArray);
         Pointer targetHeightPtr = Pointer.to(targetHeightArray);
-        Pointer arrayWidthPtr = Pointer.to(arrayWidth);
+        Pointer arrayWidthPtr = Pointer.to(heightArrayWidth);
         Pointer dst = Pointer.to(dstArray);
 
         // The platform, device type and device number
@@ -286,35 +244,24 @@ public class OpenCl implements HeightMap {
         clReleaseCommandQueue(commandQueue);
         clReleaseContext(context);
         
-        // Verify the result        
-        for(int row = 0; row != heights.height(); ++row) {
-        	int rowOffset = row * heights.width();
-        	final int frow = row;
-        	for(int column = 0; column != heights.width(); ++column) {
-        		final int fcolumn = column;
+        // Verify the result
+        
+        for(int row = 0; row != arrayHeight; ++row) {
+        	int rowOffset = row * arrayWidth;
+        	for(int column = 0; column != arrayWidth; ++column) {
         		int cellIndex = rowOffset + column;
         		short result = dstArray[cellIndex];
         		boolean resultIsZero = result == 0;
         		boolean resultIsTrue = !resultIsZero;
         		if(resultIsTrue) {
-        			visibleCells.addCell(new Cell() {
-						@Override
-						public int y() {
-							return frow;
-						}
-						
-						@Override
-						public int x() {
-							return fcolumn;
-						}
-					});
+        			visibleCells.addCell(column, row);
         		}
         	}
         }
-        
-        System.out.println("Done");
 	}
 	
-	private final Grid heights;
+	private final int[] heightArray;
+	private final int arrayWidth;
+	private final int arrayHeight;
 
 }

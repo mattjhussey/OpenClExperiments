@@ -4,12 +4,8 @@
 package hussey.matthew.opencl.gui;
 
 import hussey.matthew.opencl.BresnhamsLineOfSight;
-import hussey.matthew.opencl.Cell;
-import hussey.matthew.opencl.Grid;
 import hussey.matthew.opencl.HeightMap;
 import hussey.matthew.opencl.LineOfSight;
-import hussey.matthew.opencl.ListGrid;
-import hussey.matthew.opencl.Origin;
 import hussey.matthew.opencl.VisibleCells;
 import hussey.matthew.opencl.multithreaded.ByRowMultipleThreadHeightMap;
 import hussey.matthew.opencl.multithreaded.MultipleThreadHeightMap;
@@ -17,22 +13,17 @@ import hussey.matthew.opencl.opencl.OpenCl;
 import hussey.matthew.opencl.singlethread.SingleThreadHeightMap;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 /**
  * @author matt
@@ -47,70 +38,23 @@ public class Main {
 		
 		final int width = 2000;
 		final int height = 1600;
-		final List<Integer> heightList = new ArrayList<>();
+		final int originX = (width * 3)/ 4;
+		final int originY = (height * 2) / 3;
+		
 		final int limit = width * height;
+		final int[] heightArray = new int[limit];
 		final int maxHeight = 100;
 		final Random rand = new Random(42);
 		for(int h = 0; h != limit; ++h)
-		{
-			heightList.add(rand.nextInt(maxHeight));
+		{	
+			heightArray[h] = rand.nextInt(maxHeight);
 		}
 		
-		final Grid heights = new ListGrid(heightList, width);
+		final int originZ = heightArray[originY * width + originX] + 150;
 		
-		final LineOfSight lineOfSight = new BresnhamsLineOfSight(heights);
+		final LineOfSight lineOfSight = new BresnhamsLineOfSight(heightArray, width);
 		
-		final Origin origin = new Origin() {
-
-			@Override
-			public int x() {
-				return (width * 3)/ 4;
-			}
-
-			@Override
-			public int y() {
-				return (height * 2) / 3;
-			}
-
-			@Override
-			public int z() {
-				return heights.at(x(), y()) + 150;
-			}
-		};
-		
-		final VisibleCells visibleCells = new VisibleCells() {
-			
-			@Override
-			public void displaySelf(Graphics graphics) {
-				graphics.setColor(Color.RED);
-				for(Cell cell: cells) {
-					graphics.drawRect(cell.x(), cell.y(), 1, 1);
-				}
-			}
-
-			@Override
-			public void addCell(Cell cell) {
-				lock.lock();
-				try {
-					cells.add(cell);
-				} finally {
-					lock.unlock();
-				}
-			}
-			
-			@Override
-			public void clear() {
-				lock.lock();
-				try {
-					cells.clear();
-				} finally {
-					lock.unlock();
-				}
-			}
-			
-			final Set<Cell> cells = new HashSet<>();
-			final ReentrantLock lock = new ReentrantLock(true);
-		};
+		final VisibleCells visibleCells = new VisibleCells();
 		
 		final JFrame frame = new JFrame();
 		
@@ -126,6 +70,10 @@ public class Main {
 				visibleCells.displaySelf(g);
 			}
 		};
+		drawPanel.setPreferredSize(new Dimension(width, height));
+		final JScrollPane scrollPane = new JScrollPane(drawPanel);
+		scrollPane.setPreferredSize(new Dimension(800, 800));
+		
 		final JPanel upperPanel = new JPanel(new BorderLayout());
 		final JLabel notes = new JLabel("SPACE");
 		upperPanel.add(notes, BorderLayout.NORTH);
@@ -133,7 +81,7 @@ public class Main {
 		chooseProcess.addItem(new SingleThreadHeightMap(lineOfSight, width, height));
 		chooseProcess.addItem(new MultipleThreadHeightMap(lineOfSight, width, height));
 		chooseProcess.addItem(new ByRowMultipleThreadHeightMap(lineOfSight, width, height));
-		chooseProcess.addItem(new OpenCl(heights));
+		chooseProcess.addItem(new OpenCl(heightArray, width));
 		chooseProcess.addActionListener(new ActionListener() {
 			
 			@Override
@@ -144,7 +92,7 @@ public class Main {
 				final HeightMap process = (HeightMap)me.getSelectedItem();
 				visibleCells.clear();
 				long before = System.currentTimeMillis();
-				process.findCellsVisibleFrom(origin, visibleCells, 90);
+				process.findCellsVisibleFrom(originX, originY, originZ, visibleCells, 90);
 				long after = System.currentTimeMillis();
 				long delta = after - before;
 				notes.setText(String.format("%d ms", delta));
@@ -153,8 +101,9 @@ public class Main {
 		});
 		upperPanel.add(chooseProcess);
 		frame.add(upperPanel, BorderLayout.NORTH);
-		frame.add(drawPanel);
+		frame.add(scrollPane);
 		
+		frame.pack();
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JDialog.EXIT_ON_CLOSE);
 	}

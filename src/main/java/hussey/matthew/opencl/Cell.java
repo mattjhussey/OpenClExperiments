@@ -7,7 +7,21 @@ package hussey.matthew.opencl;
  * @author matt
  *
  */
-public interface Cell {
-	int x();
-	int y();
+public final class Cell {
+	
+	public Cell(final int x, final int y) {
+		this.x = x;
+		this.y = y;
+	}
+	
+	public int x() {
+		return x;
+	}
+	
+	public int y() {
+		return y;
+	}
+	
+	private int x;
+	private int y;
 }

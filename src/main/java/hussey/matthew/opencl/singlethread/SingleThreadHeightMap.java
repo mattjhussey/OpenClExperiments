@@ -3,10 +3,8 @@
  */
 package hussey.matthew.opencl.singlethread;
 
-import hussey.matthew.opencl.Cell;
 import hussey.matthew.opencl.HeightMap;
 import hussey.matthew.opencl.LineOfSight;
-import hussey.matthew.opencl.Origin;
 import hussey.matthew.opencl.VisibleCells;
 
 /**
@@ -22,11 +20,11 @@ public final class SingleThreadHeightMap implements HeightMap {
 	}
 
 	@Override
-	public void findCellsVisibleFrom(Origin origin, VisibleCells visibleCells, int height) {
+	public void findCellsVisibleFrom(int originX, int originY, int originZ, VisibleCells visibleCells, int height) {
 
-		int x0 = origin.x();
-		int y0 = origin.y();
-		int z0 = origin.z();
+		int x0 = originX;
+		int y0 = originY;
+		int z0 = originZ;
 		
 		for(int row = 0; row != this.height; ++row) {
 			for(int column = 0; column != this.width; ++column) {
@@ -44,16 +42,7 @@ public final class SingleThreadHeightMap implements HeightMap {
 					final int x = column;
 					final int y = row;
 					// Check here
-					visibleCells.addCell(new Cell() {							
-						@Override
-						public int y() {
-							return y;
-						}							
-						@Override
-						public int x() {
-							return x;
-						}
-					});					
+					visibleCells.addCell(x, y);					
 				}
 			}
 		}
