@@ -14,9 +14,13 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  */
 public final class VisibleCells {
+	
+	public VisibleCells(final Color colour) {
+		this.colour = colour;
+	}
 
 	public void displaySelf(Graphics graphics) {
-		graphics.setColor(Color.RED);
+		graphics.setColor(colour);
 		for(Cell cell: cells) {
 			graphics.drawRect(cell.x(), cell.y(), 1, 1);
 		}
@@ -40,6 +44,7 @@ public final class VisibleCells {
 		}
 	}
 	
+	final Color colour;
 	final Set<Cell> cells = new HashSet<>();
 	final ReentrantLock lock = new ReentrantLock(true);
 }

@@ -13,10 +13,15 @@ import hussey.matthew.opencl.opencl.OpenCl;
 import hussey.matthew.opencl.singlethread.SingleThreadHeightMap;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
+import java.util.Map.Entry;
 import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -54,7 +59,12 @@ public class Main {
 		
 		final LineOfSight lineOfSight = new BresnhamsLineOfSight(heightArray, width);
 		
-		final VisibleCells visibleCells = new VisibleCells();
+		final SortedMap<Integer, VisibleCells> layers = new TreeMap<>(Collections.reverseOrder());
+		layers.put(0, new VisibleCells(Color.BLUE));
+		layers.put(22, new VisibleCells(Color.GREEN));
+		layers.put(45, new VisibleCells(Color.YELLOW));
+		layers.put(67, new VisibleCells(Color.ORANGE));
+		layers.put(90, new VisibleCells(Color.RED));
 		
 		final JFrame frame = new JFrame();
 		
@@ -67,7 +77,9 @@ public class Main {
 
 			public void paint(java.awt.Graphics g) {
 				super.paint(g);
-				visibleCells.displaySelf(g);
+				for(final Entry<Integer, VisibleCells> layer: layers.entrySet()) {
+					layer.getValue().displaySelf(g);
+				}
 			}
 		};
 		drawPanel.setPreferredSize(new Dimension(width, height));
@@ -90,9 +102,17 @@ public class Main {
 				@SuppressWarnings("unchecked")
 				final JComboBox<HeightMap> me = (JComboBox<HeightMap>)source;
 				final HeightMap process = (HeightMap)me.getSelectedItem();
-				visibleCells.clear();
+
+				for(final Entry<Integer, VisibleCells> layer: layers.entrySet()) {
+					layer.getValue().clear();
+				}
 				long before = System.currentTimeMillis();
-				process.findCellsVisibleFrom(originX, originY, originZ, visibleCells, 90);
+
+				for(final Entry<Integer, VisibleCells> layer: layers.entrySet()) {
+					Integer targetHeight = layer.getKey();
+					VisibleCells results = layer.getValue();
+					process.findCellsVisibleFrom(originX, originY, originZ, results, targetHeight);
+				}
 				long after = System.currentTimeMillis();
 				long delta = after - before;
 				notes.setText(String.format("%d ms", delta));
